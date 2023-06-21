@@ -46,6 +46,48 @@ const uniqueWords = [
     'artificial intelligence'  
 ]
 
+const urbanWords = [
+  "Cities",
+  "Urban",
+  "Suburban",
+  "Metropolitan",
+  "Rural",
+  "Urbanization",
+  "Urbanism",
+  "Architecture",
+  "Urban Planning",
+  "Urban Design",
+  "Design",
+  "Geography",
+  "infrastructure",
+];
+
+const climateQueries = [
+  "sustainability",
+  "energy",
+  "carbon",
+  "climate change",
+  "ecology",
+  "environment",
+  "green",
+  "migration",
+];
+
+const techQueries = [
+  "technology",
+  "artificial intelligence",
+  "machine learning",
+  "data",
+  "big data",
+  "digital",
+  "smart",
+  "sensors",
+  "internet of things",
+  "autonomous",
+  "ai",
+  "simulation",
+];
+
 const apiKey = "AWF1gyFILLsnI1joPOQ9KNZxCve1GafR";
 
 // create a function to export the search results to a json
@@ -66,26 +108,18 @@ function exportToJsonFile(dir, name, jsonData) {
 }
 
 // // perform an an article search using the New York Times API and return the results
-function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
+function searchArticles(
+  key,
+  searchTerm,
+  numRecords,
+  startYear,
+  yearInterval = 3
+) {
   // fetch the articles from the NYT API using the search term and the optional start and end years
   //   add search queries related to the LCAU etc
-  let searchQueries = [
-    "Cities",
-    "Urban",
-    "Suburban",
-    "Metropolitan",
-    "Rural",
-    "Urbanization",
-    "Urbanism",
-    "Architecture",
-    "Urban Planning",
-    "Urban Design",
-    "Design",
-    "Geography",
-  ];
+  let searchQueries = techQueries.join('","');
 
-  let compiledResults = [];
-
+  searchQueries = String('"') + searchQueries + String('"');
   let termPopularityTrend = [];
 
   //   create a range of years from the start date to the current year
@@ -93,7 +127,7 @@ function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
   let currentYear = new Date().getFullYear();
 
   for (let i = startYear; i <= currentYear; i++) {
-    if (i % 3 == 0) {
+    if (i % yearInterval == 0) {
       years.push(String(i));
     }
   }
@@ -107,18 +141,7 @@ function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
     setTimeout(() => {
       const response = fetch(
         `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=${searchTerm}&begin_date=${year}0101&end_date=${year}1231&api-key=${key}&fq=headline:(
-                  "Cities",
-                  "Urban",
-                  "Suburban",
-                  "Metropolitan",
-                  "Rural",
-                  "Urbanization",
-                  "Urbanism",
-                  "Architecture",
-                  "Urban Planning",
-                  "Urban Design",
-                  "Design",
-                  "Geography")&sort=oldest`
+                  ${searchQueries})&sort=oldest`
       )
         .then((response) => {
           return response.json();
@@ -147,6 +170,8 @@ function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
           const articleTitlesAndUrls = articlesRequested.map((article) => {
             return {
               title: article.headline.main,
+              author: article.byline.original,
+              person: article.byline.person,
               url: article.web_url,
               abstract: article.abstract,
               pub_date: article.pub_date,
@@ -179,7 +204,7 @@ function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
             console.log(termPopularityTrend);
             console.log(searchResults);
             exportToJsonFile(
-              "./data2",
+              "./technology",
               `${years[0]}-${years[years.length - 1]}-${searchTerm}-nyt`,
               searchResults
             );
@@ -190,21 +215,33 @@ function searchArticles(key, searchTerm, numRecords, startYear, endYear) {
           console.log("error");
           console.log(error);
         });
-    }, index * 12000);
+    }, index * 35000);
   });
 }
 
 // searchArticles(
 //   apiKey,
 //   "sustainability",
-//   (numRecords = 5),
+//   (numRecords = 10),
 //   (startYear = "2013")
 // );
 
-// for each search term, perform a search and export the results to a json file
-uniqueWords.forEach((searchTerm, index) => {
+// uniqueWords.forEach((searchTerm, index) => {
+//   // wait 12 seconds between each search to avoid hitting the API rate limit
+//   setTimeout(() => {
+//     searchArticles(apiKey, searchTerm, (numRecords = 5), (startYear = "2013"));
+//   }, index * 4 * 12000);
+// });
+
+climateQueries.forEach((searchTerm, index) => {
   // wait 12 seconds between each search to avoid hitting the API rate limit
   setTimeout(() => {
-    searchArticles(apiKey, searchTerm, (numRecords = 5), (startYear = "2013"));
-  }, index * 4 * 12000);
+    searchArticles(
+      apiKey,
+      searchTerm,
+      (numRecords = 10),
+      (startYear = "2013"),
+      (yearInterval = 1)
+    );
+  }, index * 4 * 35000);
 });
